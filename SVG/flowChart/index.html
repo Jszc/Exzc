@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <canvas id="canvas" width="888" height="333"></canvas>
+
+  <script type="module">
+    import Tools from './index.js'
+    const rAFSetInterval = (handler, timeout) => {
+      let timer = null;
+      let startTime = Date.now();
+      const loop = () => {
+        let currentTime = Date.now();
+        if (currentTime - startTime >= timeout) {
+          startTime = currentTime;
+          handler(timer);
+        }
+        timer = requestAnimationFrame(loop);
+      };
+      loop();
+      return timer;
+    };
+    let ctx;
+    let offset = 0;
+    const ratio = window.devicePixelRatio || 1;
+    let canvas = document.getElementById('canvas');
+    const { width, height } = canvas;
+    canvas.width = Math.round(width * ratio);
+    canvas.height = Math.round(height * ratio);
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    canvas.style.color = '#ffffff';
+
+    if (canvas?.getContext) {
+      ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ccc';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+    ctx.font = '12px sans-serif';
+    ctx.fillStyle = "#fff";
+    ctx.scale(ratio, ratio);
+
+    const processItem = [];
+
+    const ProcessDesign = {
+      pid: '0',
+      iid: '0',
+      fillText: '补卡申请',
+      nextCondition: '是否有项目',
+      process: 'start',
+      nextStep: [
+        {
+          pid: '0',
+          iid: '00',
+          fillText: '部门经理审批',
+          nextCondition: '是否同意',
+          nextStep: [
+            {
+              pid: '00',
+              iid: '000',
+              fillText: '补卡成功',
+              process: 'end',
+              nextStep: []
+            }
+          ],
+          backStep: [
+            {
+              iid: '0',
+            }
+          ]
+        }
+      ],
+      backStep: [
+        {
+          pid: '0',
+          iid: '01',
+          fillText: '项目经理审批',
+          nextCondition: '是否同意',
+
+          nextStep: [
+            {
+              iid: '00',
+            }
+          ],
+          backStep: [
+            {
+              iid: '0',
+            }
+          ]
+        }
+      ]
+    };
+
+    const middleLineY = height / 3;
+
+    function loopTreeToDraw(params) {
+      const { nextStep = [], backStep = [], ...args } = params;
+      const renderStep = [...nextStep, ...backStep];
+      if (args) {
+        Tools.drawReact(ctx, { ...args, y: middleLineY });
+      }
+
+      if (renderStep && renderStep.length) {
+        renderStep.forEach((item) => {
+          item?.pid && loopTreeToDraw(item);
+        })
+      }
+    }
+
+
+
+    console.log('start')
+    await loopTreeToDraw(ProcessDesign);
+    console.log('end', ctx)
+
+  </script>
+</body>
+
+</html>
